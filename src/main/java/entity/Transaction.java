@@ -1,8 +1,7 @@
 package entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,8 +10,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "transactions")
-@RequiredArgsConstructor
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Transaction {
 
     @Id
@@ -20,13 +21,33 @@ public class Transaction {
     private UUID id;
 
     @Column(name = "reference_id", nullable = false, unique = true)
-    private String referenceId; // Idempotency key
+    private String referenceId;
 
+    @Column(name = "description")
     private String description;
 
-    @Column(name = "posted_at", updatable = false)
-    private Instant postedAt = Instant.now();
+    @Builder.Default
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
 
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<JournalEntry> entries = new ArrayList<>();
+
+    // Custom constructor matching your LedgerService usage: new Transaction(referenceId, description)
+    public Transaction(String referenceId, String description) {
+        this.referenceId = referenceId;
+        this.description = description;
+        this.createdAt = Instant.now();
+        this.entries = new ArrayList<>();
+    }
+
+    /**
+     * Helper method to maintain bi-directional relationship integrity
+     * when adding JournalEntry items.
+     */
+    public void addEntry(JournalEntry entry) {
+        entries.add(entry);
+        entry.setTransaction(this);
+    }
 }

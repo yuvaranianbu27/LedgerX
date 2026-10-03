@@ -1,52 +1,44 @@
 package entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import types.AccountStatus;
 import types.AccountType;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+
 @Entity
 @Table(name = "accounts")
-@RequiredArgsConstructor
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
-
-    @Column(name = "account_number", nullable = false, unique = true)
-    private String accountNumber;
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AccountType type;
+    @Column(name = "account_type", nullable = false)
+    private AccountType type; // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
 
-    @Column(nullable = false, length = 3)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private AccountStatus status = AccountStatus.ACTIVE; // ACTIVE, INACTIVE, FROZEN
+
+    @Column(name = "currency", nullable = false, length = 3)
     private String currency;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AccountStatus status = AccountStatus.ACTIVE;
 
     @Column(name = "allow_negative", nullable = false)
     private boolean allowNegative = false;
 
-    @Version // Optimistic Concurrency Control
-    private Long version;
-
-    @Column(name = "created_at", updatable = false)
+    @Builder.Default
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
-
-
-
 }
-
